@@ -13,10 +13,11 @@ import java.util.Locale;
 
 // TODO:
 // Fix withdrawal from credit account
-// Fix so that you can use arrow keys to select items
+// Fix when deleting a customer with an account the buttons doesn't reset
 // Add Credit and Savings to account list
-// Add menu with file options
 // Comment
+
+// Why does the list of customers work?
 
 public class GUI extends JFrame
 {
@@ -41,14 +42,9 @@ public class GUI extends JFrame
     {
     	Locale.setDefault(Locale.ENGLISH);
     	
-        SwingUtilities.invokeLater(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                new GUI().setVisible(true);
-            }
-        });
+    	// Using lambda expressions for a more concise syntax and better readability
+    	// This also goes for creating events for buttons and such
+        SwingUtilities.invokeLater(() -> new GUI().setVisible(true));
     }
 
     public GUI()
@@ -63,6 +59,7 @@ public class GUI extends JFrame
 
     private void initializeComponents()
     {
+    	// Trying to set the UI to look like the systems UI, prints the error and uses default UI otherwise
         try
         {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -79,145 +76,104 @@ public class GUI extends JFrame
         
         // Button to add customer
         createCustomerButton = new JButton("Create New Customer");
-        createCustomerButton.addActionListener(new ActionListener()
+        createCustomerButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	createNewCustomer();
-            }
+        	createNewCustomer();
         });
         
         // Button to change customer name
         changeNameButton = new JButton("Change Customer Name");
-        changeNameButton.addActionListener(new ActionListener()
+        changeNameButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	changeCustomerName();
-            }
+        	changeCustomerName();
         });
         
         // Button to create a savings account
         createSavingsAccButton = new JButton("Create Savings Account");
-        createSavingsAccButton.addActionListener(new ActionListener()
+        createSavingsAccButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	createSavingsAccount();
-            }
+        	createSavingsAccount();
         });
         
         // Button to create a credit account
         createCreditAccButton = new JButton("Create Credit Account");
-        createCreditAccButton.addActionListener(new ActionListener()
+        createCreditAccButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	createCreditAccount();
-            }
+        	createCreditAccount();
         });
         
         // Button to withdraw from an account
         withdrawButton = new JButton("Withdraw");
-        withdrawButton.addActionListener(new ActionListener()
+        withdrawButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	withdraw();
-            }
+        	withdraw();
         });
         
         // Button to deposit to an account
         depositButton = new JButton("Deposit");
-        depositButton.addActionListener(new ActionListener()
+        depositButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	deposit();
-            }
+        	deposit();
         });
         
         // Button to delete account
         closeAccountButton = new JButton("Close Account");
-        closeAccountButton.addActionListener(new ActionListener()
+        closeAccountButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	closeAccount();
-            }
+        	closeAccount();
         });
         
         // Button to delete customer
         deleteCustomerButton = new JButton("Delete Customer");
-        deleteCustomerButton.addActionListener(new ActionListener()
+        deleteCustomerButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-            	deleteCustomer();
-            }
+        	deleteCustomer();
         });
         
         // Button to clear selection
         clearSelectionButton = new JButton("Clear Selection");
-        clearSelectionButton.addActionListener(new ActionListener()
+        clearSelectionButton.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                customerList.clearSelection();
-                accountComboBox.setSelectedIndex(-1);
-                accountComboBox.removeAllItems();
-                balanceLabel.setText("");
-                
-                resetAllButtons();
-            }
+            customerList.clearSelection();
+            accountComboBox.setSelectedIndex(-1);
+            accountComboBox.removeAllItems();
+            balanceLabel.setText("");
+            
+            resetAllButtons();
         });
         
-        // Event to update the account list when a customer is clicked
-        customerList.addMouseListener(new MouseAdapter()
+        // Event to update the account list when a customer is chosen
+        customerList.addListSelectionListener(e ->
         {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-            	if (customerListModel.getSize() != 0)
-            	{
-                	updateAccountList();
-                	updateAccountButtons();
-
-                    changeNameButton.setEnabled(true);
-                    createSavingsAccButton.setEnabled(true);
-                    createCreditAccButton.setEnabled(true);
-                    deleteCustomerButton.setEnabled(true);
-                    clearSelectionButton.setEnabled(true);
-            	}
-            }
+        	if (customerListModel.getSize() != 0)
+        	{
+                changeNameButton.setEnabled(true);
+                createSavingsAccButton.setEnabled(true);
+                createCreditAccButton.setEnabled(true);
+                deleteCustomerButton.setEnabled(true);
+                clearSelectionButton.setEnabled(true);
+        		
+            	updateAccountList();
+            	updateAccountButtons();
+        	}
         });
         
         // Event to update the balance label when an account is clicked
-        accountComboBox.addActionListener(new ActionListener()
+        accountComboBox.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
+            String selectedAccount = (String) accountComboBox.getSelectedItem();
+            if (selectedAccount != null)
             {
-                String selectedAccount = (String) accountComboBox.getSelectedItem();
-                if (selectedAccount != null)
-                {
-                	updateBalanceLabel();
-                }
+            	updateBalanceLabel();
             }
         });
         
+        // Creating the menu bar
+        createMenuBar();
+        
         // Changing properties of the GUI
         setTitle("Bank GUI");
-        setSize(800, 420);
+        setSize(800, 440);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
@@ -312,6 +268,19 @@ public class GUI extends JFrame
     	accountComboBox.setEnabled(!comboBoxEmpty);
     }
     
+    private static boolean isNumeric(String str)
+    {
+        try
+        {
+            Double.parseDouble(str);
+            return true;
+        }
+        catch (NumberFormatException e)
+        {
+            return false;
+        }
+    }
+    
     private void updateAccountList()
     {
         String selectedCustomer = customerList.getSelectedValue();
@@ -375,6 +344,40 @@ public class GUI extends JFrame
         }
     }
     
+    private void createMenuBar()
+    {
+        JMenuBar menuBar = new JMenuBar();
+        setJMenuBar(menuBar);
+
+        JMenu fileMenu = new JMenu("File");
+        menuBar.add(fileMenu);
+
+        JMenuItem exitMenuItem = new JMenuItem("Exit");
+        fileMenu.add(exitMenuItem);
+        
+        fileMenu.addSeparator();
+        
+        JMenuItem loadMenuItem = new JMenuItem("Load");
+        fileMenu.add(loadMenuItem);
+        
+        JMenuItem saveMenuItem = new JMenuItem("Save");
+        fileMenu.add(saveMenuItem);
+        
+        fileMenu.addSeparator();
+        
+        JMenuItem saveTransactionsMenuItem = new JMenuItem("Save Transactions");
+        fileMenu.add(saveTransactionsMenuItem);
+
+        exitMenuItem.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                System.exit(0);
+            }
+        });
+    }
+    
     private void createNewCustomer()
     {
         String firstName = JOptionPane.showInputDialog(this, "Enter First Name:", "Input", JOptionPane.PLAIN_MESSAGE);
@@ -401,21 +404,30 @@ public class GUI extends JFrame
             return;
         }
 
-        boolean success = bankLogic.createCustomer(firstName, surName, pNo);
-
-        if (success)
+        if (firstName.matches("[a-zA-Z]+") && surName.matches("[a-zA-Z]+") && isNumeric(pNo))
         {
-        	updateCustomerList();
-        	updateAccountButtons();
-            customerList.clearSelection();
-            accountComboBox.setSelectedIndex(-1);
-            accountComboBox.removeAllItems();
-            balanceLabel.setText("");
-            JOptionPane.showMessageDialog(this, "Customer created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            boolean success = bankLogic.createCustomer(firstName, surName, pNo);
+
+            if (success)
+            {
+                customerList.clearSelection();
+                accountComboBox.setSelectedIndex(-1);
+                accountComboBox.removeAllItems();
+                balanceLabel.setText("");
+            	
+            	updateCustomerList();
+                
+                JOptionPane.showMessageDialog(this, "Customer created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(this, "Failed to create Customer. Check input or Customer already exists.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
         else
         {
-            JOptionPane.showMessageDialog(this, "Failed to create Customer. Check input or Customer already exists.", "Error", JOptionPane.ERROR_MESSAGE);
+        	JOptionPane.showMessageDialog(this, "Failed to create Customer. Names can only consist of characters and Personal Number can only consist of numbers.",
+        																													   "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -447,18 +459,26 @@ public class GUI extends JFrame
         
         String[] parts = selectedCustomer.split(" ");
         String pNo = parts[0];
-
-        boolean success = bankLogic.changeCustomerName(newFirstName, newSurName, pNo);
         
-        if (success)
+        if (newFirstName.matches("[a-zA-Z]+") && newSurName.matches("[a-zA-Z]+"))
         {
-        	resetAllButtons();
-        	updateCustomerList();
-            JOptionPane.showMessageDialog(this, "Customer Name changed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            boolean success = bankLogic.changeCustomerName(newFirstName, newSurName, pNo);
+            
+            if (success)
+            {
+            	resetAllButtons();
+            	updateCustomerList();
+            	
+                JOptionPane.showMessageDialog(this, "Customer Name changed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(this, "Failed to change Customer Name. Check input or Customer not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
         else
         {
-            JOptionPane.showMessageDialog(this, "Failed to change Customer name. Check input or Customer not found.", "Error", JOptionPane.ERROR_MESSAGE);
+        	JOptionPane.showMessageDialog(this, "Failed to change Customer Name. Names can only consist of characters.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -489,6 +509,7 @@ public class GUI extends JFrame
         {
         	updateAccountList();
         	updateAccountButtons();
+        	
             JOptionPane.showMessageDialog(this, "Account (" + accountNum + ") created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
         else
@@ -524,6 +545,7 @@ public class GUI extends JFrame
         {
         	updateAccountList();
         	updateAccountButtons();
+        	
             JOptionPane.showMessageDialog(this, "Account (" + accountNum + ") created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
         }
         else
@@ -564,6 +586,7 @@ public class GUI extends JFrame
             if (success)
             {
             	updateBalanceLabel();
+            	
                 JOptionPane.showMessageDialog(this, "Withdrawal of \"" + amount + "\" from the Account (" + accountNum +
                         							   ") was successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -574,7 +597,7 @@ public class GUI extends JFrame
         }
         catch (NumberFormatException ex)
         {
-            JOptionPane.showMessageDialog(this, "Invalid input. Please enter valid integers for Account Number and Amount.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid input. Please enter valid numbers for the Amount.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -610,6 +633,7 @@ public class GUI extends JFrame
             if (success)
             {
             	updateBalanceLabel();
+            	
                 JOptionPane.showMessageDialog(this, "Deposit of \"" + amount + "\" to the Account (" + accountNum +
                 								  ") was successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -620,7 +644,7 @@ public class GUI extends JFrame
         }
         catch (NumberFormatException ex)
         {
-            JOptionPane.showMessageDialog(this, "Invalid input. Please enter valid numbers for Account Number and Amount.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid input. Please enter valid numbers for the Amount.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -679,11 +703,12 @@ public class GUI extends JFrame
     	
     	List<String> customerInfo = bankLogic.deleteCustomer(pNo);
     	
+        customerList.clearSelection();
+        accountComboBox.removeAllItems();
+    	
     	resetAllButtons();
     	updateCustomerList();
         updateBalanceLabel();
-        customerList.clearSelection();
-        accountComboBox.removeAllItems();
         
         JOptionPane.showMessageDialog(this, "Customer deleted successfully.\n\n" + customerInfo, "Success", JOptionPane.INFORMATION_MESSAGE);
     }

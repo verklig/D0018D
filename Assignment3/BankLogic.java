@@ -185,10 +185,17 @@ public class BankLogic
             }
         }
 
-        Customer newCustomer = new Customer(firstName, surName, pNo);
-        customers.add(newCustomer);
-        
-        return true;
+        if (!firstName.isEmpty() && !surName.isEmpty() && !pNo.isEmpty())
+        {
+            Customer newCustomer = new Customer(firstName, surName, pNo);
+            customers.add(newCustomer);
+            
+            return true;
+        }
+        else
+        {
+        	return false;
+        }
     }
 
     /**
