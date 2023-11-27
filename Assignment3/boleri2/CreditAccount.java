@@ -19,7 +19,7 @@ public class CreditAccount extends Account
     // Default constructor of the class
     public CreditAccount(int accountNum, String pNo)
     {
-        super(accountNum, "Kreditkonto", pNo);
+        super(accountNum, "Credit Account", pNo);
         
         creditLimit = new BigDecimal("5000.0");
         debtInterestRate = new BigDecimal("7.0");

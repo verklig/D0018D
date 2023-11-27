@@ -19,7 +19,7 @@ public class SavingsAccount extends Account
     // Default constructor of the class
     public SavingsAccount(int accountNum, String pNo)
     {
-        super(accountNum, "Sparkonto", pNo);
+        super(accountNum, "Savings Account", pNo);
         
         freeWithdrawals = 1;
         withdrawalFeeRate = new BigDecimal("0.02");

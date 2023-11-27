@@ -2,26 +2,26 @@ package boleri2;
 
 import javax.swing.*;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
-// TODO:
-// Fix withdrawal from credit account
-// Fix when deleting a customer with an account the buttons doesn't reset
-// Add Credit and Savings to account list
-// Comment
-
-// Why does the list of customers work?
-
+/**
+ * This class handles and creates the GUI that contains the necessary fields and methods to make a user friendly program.
+ * @author Eric Blohm, boleri-2
+ */
 public class GUI extends JFrame
 {
+	// Program version
 	private static final long serialVersionUID = 1L;
+	
+	// I chose to initialize everything at instance level so that I
+	// can break everything out to their own methods
 	private BankLogic bankLogic;
     private DefaultListModel<String> customerListModel;
     private JList<String> customerList;
@@ -37,9 +37,10 @@ public class GUI extends JFrame
     private JButton deleteCustomerButton;
     private JButton clearSelectionButton;
     
-    
+    // The main method that gets executed by the compiler
     public static void main(String[] args)
     {
+    	// Setting default language to English
     	Locale.setDefault(Locale.ENGLISH);
     	
     	// Using lambda expressions for a more concise syntax and better readability
@@ -47,6 +48,7 @@ public class GUI extends JFrame
         SwingUtilities.invokeLater(() -> new GUI().setVisible(true));
     }
 
+    // Default constructor of the class
     public GUI()
     {
         bankLogic = new BankLogic();
@@ -54,9 +56,13 @@ public class GUI extends JFrame
         customerList = new JList<>(customerListModel);
         accountComboBox = new JComboBox<>();
         balanceLabel = new JLabel("");
+        
         initializeComponents();
     }
 
+    /**
+     * Initializes the components of the GUI
+     */
     private void initializeComponents()
     {
     	// Trying to set the UI to look like the systems UI, prints the error and uses default UI otherwise
@@ -145,7 +151,7 @@ public class GUI extends JFrame
         // Event to update the account list when a customer is chosen
         customerList.addListSelectionListener(e ->
         {
-        	if (customerListModel.getSize() != 0)
+        	if (customerList.getSelectedIndex() != -1)
         	{
                 changeNameButton.setEnabled(true);
                 createSavingsAccButton.setEnabled(true);
@@ -158,7 +164,7 @@ public class GUI extends JFrame
         	}
         });
         
-        // Event to update the balance label when an account is clicked
+        // Event to update the balance label when an account is chosen
         accountComboBox.addActionListener(e ->
         {
             String selectedAccount = (String) accountComboBox.getSelectedItem();
@@ -170,6 +176,9 @@ public class GUI extends JFrame
         
         // Creating the menu bar
         createMenuBar();
+        
+        // Setting the icon
+        setIcon();
         
         // Changing properties of the GUI
         setTitle("Bank GUI");
@@ -202,7 +211,7 @@ public class GUI extends JFrame
         deleteCustomerButton.setBounds(200, 340, 180, 30);
         clearSelectionButton.setBounds(463, 220, 120, 30);
         
-        // Setting buttons to be disabled as default
+        // Setting buttons to be disabled as default except creating a customer
         createCustomerButton.setEnabled(true);
         changeNameButton.setEnabled(false);
         createSavingsAccButton.setEnabled(false);
@@ -229,21 +238,33 @@ public class GUI extends JFrame
         add(clearSelectionButton);
     }
     
+    /**
+     * Simple method to reuse the canceled operation message
+     */
     private void canceledOperationMessage()
     {
     	JOptionPane.showMessageDialog(this, "Operation was canceled.", "Alert", JOptionPane.WARNING_MESSAGE);
     }
     
+    /**
+     * Simple method to reuse the no customer selected message
+     */
     private void noCustomerSelectedMessage()
     {
     	JOptionPane.showMessageDialog(this, "No Customer selected.", "Alert", JOptionPane.WARNING_MESSAGE);
     }
     
+    /**
+     * Simple method to reuse the no customer/account selected message
+     */
     private void noCustomerOrAccountSelectedMessage()
     {
     	JOptionPane.showMessageDialog(this, "No Customer/Account selected.", "Alert", JOptionPane.WARNING_MESSAGE);
     }
     
+    /**
+     * Resets all the buttons to their default state
+     */
     private void resetAllButtons()
     {
     	createCustomerButton.setEnabled(true);
@@ -258,6 +279,9 @@ public class GUI extends JFrame
         accountComboBox.setEnabled(false);
     }
     
+    /**
+     * Updates the buttons associated with an account
+     */
     private void updateAccountButtons()
     {
     	boolean comboBoxEmpty = accountComboBox.getItemCount() == 0;
@@ -268,19 +292,9 @@ public class GUI extends JFrame
     	accountComboBox.setEnabled(!comboBoxEmpty);
     }
     
-    private static boolean isNumeric(String str)
-    {
-        try
-        {
-            Double.parseDouble(str);
-            return true;
-        }
-        catch (NumberFormatException e)
-        {
-            return false;
-        }
-    }
-    
+    /**
+     * Updates the account list by removing the items and adding them again if they exist
+     */
     private void updateAccountList()
     {
         String selectedCustomer = customerList.getSelectedValue();
@@ -290,19 +304,30 @@ public class GUI extends JFrame
             String[] parts = selectedCustomer.split(" ");
             String pNo = parts[0];
 
-            List<String> accounts = bankLogic.getCustomerAccountNumbers(pNo);
+            List<String> accountNumList = bankLogic.getCustomerAccountNumbers(pNo);
 
             accountComboBox.removeAllItems();
             
-            for (String account : accounts)
+            for (String accountNumStr : accountNumList)
             {
-            	accountComboBox.addItem(account);
+                String[] accountNumParts = accountNumStr.split(" ");
+                int accountNum = Integer.parseInt(accountNumParts[0]);
+                
+            	String accountInfo = bankLogic.getAccount(pNo, accountNum);
+            	
+                String[] accountInfoParts = accountInfo.split(" ");
+                String accountType = accountInfoParts[2];
+            	
+            	accountComboBox.addItem(accountNumStr + " " + accountType);
             }
             
             updateBalanceLabel();
         }
     }
     
+    /**
+     * Updates the customer list by removing the items and adding them again if they exist
+     */
     private void updateCustomerList()
     {
         List<String> customers = bankLogic.getAllCustomers();
@@ -315,9 +340,12 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Updates the balance label by setting the text to the balance if an account is selected
+     */
     private void updateBalanceLabel()
     {
-        String selectedAccount = (String) accountComboBox.getSelectedItem();
+        String selectedAccount = (String)accountComboBox.getSelectedItem();
 
         if (selectedAccount != null)
         {
@@ -344,6 +372,26 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Sets the icon of the GUI
+     */
+    private void setIcon()
+    {
+        try
+        {
+        	InputStream iconStream = getClass().getClassLoader().getResourceAsStream("boleri2_files/icon.png");
+            BufferedImage icon = ImageIO.read(iconStream);
+            setIconImage(icon);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Creates the menu bar that has no function except exiting as of yet
+     */
     private void createMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
@@ -368,16 +416,15 @@ public class GUI extends JFrame
         JMenuItem saveTransactionsMenuItem = new JMenuItem("Save Transactions");
         fileMenu.add(saveTransactionsMenuItem);
 
-        exitMenuItem.addActionListener(new ActionListener()
+        exitMenuItem.addActionListener(e ->
         {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                System.exit(0);
-            }
+            System.exit(0);
         });
     }
     
+    /**
+     * Creates a new customer with the inputs of the user
+     */
     private void createNewCustomer()
     {
         String firstName = JOptionPane.showInputDialog(this, "Enter First Name:", "Input", JOptionPane.PLAIN_MESSAGE);
@@ -411,11 +458,11 @@ public class GUI extends JFrame
             if (success)
             {
                 customerList.clearSelection();
-                accountComboBox.setSelectedIndex(-1);
                 accountComboBox.removeAllItems();
-                balanceLabel.setText("");
             	
+            	resetAllButtons();
             	updateCustomerList();
+                updateBalanceLabel();
                 
                 JOptionPane.showMessageDialog(this, "Customer created successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -426,11 +473,13 @@ public class GUI extends JFrame
         }
         else
         {
-        	JOptionPane.showMessageDialog(this, "Failed to create Customer. Names can only consist of characters and Personal Number can only consist of numbers.",
-        																													   "Error", JOptionPane.ERROR_MESSAGE);
+        	JOptionPane.showMessageDialog(this, "Failed to create Customer. Names can only consist of characters and Personal Number can only consist of numbers.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
+    /**
+     * Changes the name of a customer with the inputs of the user
+     */
     private void changeCustomerName()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -466,8 +515,12 @@ public class GUI extends JFrame
             
             if (success)
             {
+                customerList.clearSelection();
+                accountComboBox.removeAllItems();
+            	
             	resetAllButtons();
             	updateCustomerList();
+                updateBalanceLabel();
             	
                 JOptionPane.showMessageDialog(this, "Customer Name changed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
@@ -482,6 +535,9 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Creates a savings account if a customer is selected
+     */
     private void createSavingsAccount()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -492,8 +548,7 @@ public class GUI extends JFrame
             return;
         }
         
-        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to create a new Savings Account for the selected Customer?",
-        																						 "Confirmation", JOptionPane.YES_NO_OPTION);
+        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to create a new Savings Account for the selected Customer?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
         	canceledOperationMessage();
@@ -518,6 +573,9 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Creates a credit account if a customer is selected
+     */
     private void createCreditAccount()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -528,8 +586,7 @@ public class GUI extends JFrame
             return;
         }
         
-        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to create a new Credit Account for the selected Customer?",
-        																						"Confirmation", JOptionPane.YES_NO_OPTION);
+        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to create a new Credit Account for the selected Customer?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
         	canceledOperationMessage();
@@ -554,6 +611,9 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Withdraws from the selected account
+     */
     private void withdraw()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -565,12 +625,15 @@ public class GUI extends JFrame
             return;
         }
         
-        String[] parts = selectedCustomer.split(" ");
-        String pNo = parts[0];
+        String[] customerParts = selectedCustomer.split(" ");
+        String pNo = customerParts[0];
         
         try
         {
-            int accountNum = Integer.parseInt(selectedAccount);
+            String[] accountParts = selectedAccount.split(" ");
+            String accountNumStr = accountParts[0];
+            
+            int accountNum = Integer.parseInt(accountNumStr);
             String amountStr = JOptionPane.showInputDialog(this, "Enter Amount To Withdraw:", "Input", JOptionPane.PLAIN_MESSAGE);
             
             if (amountStr == null)
@@ -587,8 +650,7 @@ public class GUI extends JFrame
             {
             	updateBalanceLabel();
             	
-                JOptionPane.showMessageDialog(this, "Withdrawal of \"" + amount + "\" from the Account (" + accountNum +
-                        							   ") was successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Withdrawal of \"" + amount + "\" from the Account (" + accountNum + ") was successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
             else
             {
@@ -601,6 +663,9 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Deposits to the selected account
+     */
     private void deposit()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -612,12 +677,16 @@ public class GUI extends JFrame
             return;
         }
         
-        String[] parts = selectedCustomer.split(" ");
-        String pNo = parts[0];
+        String[] customerParts = selectedCustomer.split(" ");
+        String pNo = customerParts[0];
         
         try
         {
-            int accountNum = Integer.parseInt(selectedAccount);
+            String[] accountParts = selectedAccount.split(" ");
+            String accountNumStr = accountParts[0];
+            
+            int accountNum = Integer.parseInt(accountNumStr);
+            
             String amountStr = JOptionPane.showInputDialog(this, "Enter Amount To Deposit:", "Input", JOptionPane.PLAIN_MESSAGE);
             
             if (amountStr == null)
@@ -634,8 +703,7 @@ public class GUI extends JFrame
             {
             	updateBalanceLabel();
             	
-                JOptionPane.showMessageDialog(this, "Deposit of \"" + amount + "\" to the Account (" + accountNum +
-                								  ") was successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Deposit of \"" + amount + "\" to the Account (" + accountNum + ") was successful.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
             else
             {
@@ -648,6 +716,9 @@ public class GUI extends JFrame
         }
     }
     
+    /**
+     * Closes the selected account
+     */
     private void closeAccount()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -659,17 +730,20 @@ public class GUI extends JFrame
             return;
         }
         
-        int accountNum = Integer.parseInt(selectedAccount);
-        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to close the selected Account (" + accountNum + ")?",
-																						   "Confirmation", JOptionPane.YES_NO_OPTION);
+        String[] accountParts = selectedAccount.split(" ");
+        String accountNumStr = accountParts[0];
+        
+        int accountNum = Integer.parseInt(accountNumStr);
+        
+        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to close the selected Account (" + accountNum + ")?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
         	canceledOperationMessage();
         	return;
         }
         
-        String[] parts = selectedCustomer.split(" ");
-        String pNo = parts[0];
+        String[] customerParts = selectedCustomer.split(" ");
+        String pNo = customerParts[0];
         
         String accountInfo = bankLogic.closeAccount(pNo, accountNum);
         
@@ -680,6 +754,9 @@ public class GUI extends JFrame
         JOptionPane.showMessageDialog(this, "Account closed successfully.\n\n" + accountInfo, "Success", JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * Deletes the selected customer and closes associated accounts
+     */
     private void deleteCustomer()
     {
     	String selectedCustomer = customerList.getSelectedValue();
@@ -690,8 +767,7 @@ public class GUI extends JFrame
             return;
         }
         
-        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete the selected Customer?",
-																	   "Confirmation", JOptionPane.YES_NO_OPTION);
+        int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete the selected Customer?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
         	canceledOperationMessage();
@@ -711,6 +787,24 @@ public class GUI extends JFrame
         updateBalanceLabel();
         
         JOptionPane.showMessageDialog(this, "Customer deleted successfully.\n\n" + customerInfo, "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    /**
+     * Helper method to check if a string only has numbers in it
+     * @param str contains the String that is supposed to consist of numbers only
+     * @return true or false
+     */
+    private boolean isNumeric(String str)
+    {
+        try
+        {
+            Double.parseDouble(str);
+            return true;
+        }
+        catch (NumberFormatException e)
+        {
+            return false;
+        }
     }
 }
 
