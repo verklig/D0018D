@@ -1,17 +1,14 @@
 package boleri2;
 
 import javax.swing.*;
-
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.List;
@@ -247,14 +244,6 @@ public class GUI extends JFrame
     }
     
     /**
-     * Simple method to reuse the canceled operation message
-     */
-    private void canceledOperationMessage()
-    {
-    	JOptionPane.showMessageDialog(this, "Operation was canceled.", "Alert", JOptionPane.WARNING_MESSAGE);
-    }
-    
-    /**
      * Simple method to reuse the no customer selected message
      */
     private void noCustomerSelectedMessage()
@@ -413,11 +402,11 @@ public class GUI extends JFrame
         
         fileMenu.addSeparator();
         
-        JMenuItem loadMenuItem = new JMenuItem("Load");
-        fileMenu.add(loadMenuItem);
-        
         JMenuItem saveMenuItem = new JMenuItem("Save");
         fileMenu.add(saveMenuItem);
+        
+        JMenuItem loadMenuItem = new JMenuItem("Load");
+        fileMenu.add(loadMenuItem);
         
         fileMenu.addSeparator();
         
@@ -429,19 +418,19 @@ public class GUI extends JFrame
             System.exit(0);
         });
         
-        loadMenuItem.addActionListener(e ->
-        {
-        	loadData();
-        });
-        
         saveMenuItem.addActionListener(e ->
         {
         	saveData();
         });
         
+        loadMenuItem.addActionListener(e ->
+        {
+        	loadData();
+        });
+        
         saveTransactionsMenuItem.addActionListener(e ->
         {
-        	
+        	saveTransactions();
         });
     }
     
@@ -454,7 +443,6 @@ public class GUI extends JFrame
         
         if (firstName == null)
         {
-        	canceledOperationMessage();
             return;
         }
         
@@ -462,7 +450,6 @@ public class GUI extends JFrame
         
         if (surName == null)
         {
-        	canceledOperationMessage();
             return;
         }
         
@@ -470,7 +457,6 @@ public class GUI extends JFrame
         
         if (pNo == null)
         {
-        	canceledOperationMessage();
             return;
         }
 
@@ -517,7 +503,6 @@ public class GUI extends JFrame
         
         if (newFirstName == null)
         {
-        	canceledOperationMessage();
             return;
         }
         
@@ -525,7 +510,6 @@ public class GUI extends JFrame
         
         if (newSurName == null)
         {
-        	canceledOperationMessage();
             return;
         }
         
@@ -574,7 +558,6 @@ public class GUI extends JFrame
         int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to create a new Savings Account for the selected Customer?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
-        	canceledOperationMessage();
         	return;
         }
         
@@ -612,7 +595,6 @@ public class GUI extends JFrame
         int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to create a new Credit Account for the selected Customer?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
-        	canceledOperationMessage();
         	return;
         }
         
@@ -661,7 +643,6 @@ public class GUI extends JFrame
             
             if (amountStr == null)
             {
-                canceledOperationMessage();
                 return;
             }
             
@@ -714,7 +695,6 @@ public class GUI extends JFrame
             
             if (amountStr == null)
             {
-                canceledOperationMessage();
                 return;
             }
             
@@ -761,7 +741,6 @@ public class GUI extends JFrame
         int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to close the selected Account (" + accountNum + ")?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
-        	canceledOperationMessage();
         	return;
         }
         
@@ -793,7 +772,6 @@ public class GUI extends JFrame
         int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete the selected Customer?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (answer != JOptionPane.YES_OPTION)
         {
-        	canceledOperationMessage();
         	return;
         }
     	
@@ -839,11 +817,9 @@ public class GUI extends JFrame
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(relativePath));
         
-        // Create a custom accessory with an icon
         JPanel accessoryPanel = new JPanel();
         accessoryPanel.setLayout(new BorderLayout());
         
-        // Adjust the path to the actual location of your icon
         ImageIcon icon = new ImageIcon("boleri2_files/icon.png");
         JLabel iconLabel = new JLabel(icon);
         accessoryPanel.add(iconLabel, BorderLayout.CENTER);
@@ -874,11 +850,9 @@ public class GUI extends JFrame
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(relativePath));
         
-        // Create a custom accessory with an icon
         JPanel accessoryPanel = new JPanel();
         accessoryPanel.setLayout(new BorderLayout());
         
-        // Adjust the path to the actual location of your icon
         ImageIcon icon = new ImageIcon("boleri2_files/icon.png");
         JLabel iconLabel = new JLabel(icon);
         accessoryPanel.add(iconLabel, BorderLayout.CENTER);
@@ -903,10 +877,62 @@ public class GUI extends JFrame
         }
     }
     
-//    private void saveTransactions(Account account) 
-//    {
-//        String filePath = "path/to/save/transactions.txt";
-//        FileManager.saveTransactions(filePath, account);
-//    }
-}
+    private void saveTransactions()
+    {
+        String selectedAccount = (String)accountComboBox.getSelectedItem();
+        String selectedCustomer = customerList.getSelectedValue();
 
+        if (selectedAccount != null && selectedCustomer != null)
+        {
+            String[] accountParts = selectedAccount.split(" ");
+            int accountNum = Integer.parseInt(accountParts[0]);
+            
+            String[] customerParts = selectedCustomer.split(" ");
+            String pNo = customerParts[0];
+            
+            String currentDirectory = System.getProperty("user.dir");
+            String relativePath = currentDirectory + File.separator + "src" + File.separator + "boleri2_files";
+            
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(new File(relativePath));
+            
+            FileNameExtensionFilter txtFilter = new FileNameExtensionFilter("Text Files (*.txt)", "txt");
+            fileChooser.addChoosableFileFilter(txtFilter);
+            fileChooser.setFileFilter(txtFilter);
+            
+            JPanel accessoryPanel = new JPanel();
+            accessoryPanel.setLayout(new BorderLayout());
+            
+            ImageIcon icon = new ImageIcon("boleri2_files/icon.png");
+            JLabel iconLabel = new JLabel(icon);
+            accessoryPanel.add(iconLabel, BorderLayout.CENTER);
+            
+            fileChooser.setAccessory(accessoryPanel);
+            
+            int result = fileChooser.showSaveDialog(this);
+            if (result == JFileChooser.APPROVE_OPTION)
+            {
+                File selectedFile = fileChooser.getSelectedFile();
+                String filePath = selectedFile.getAbsolutePath();
+                
+                if (!filePath.toLowerCase().endsWith(".txt"))
+                {
+                    filePath += ".txt";
+                }
+                
+                if (bankLogic.saveTransactionsToFile(fileManager, accountNum, pNo, selectedFile.getAbsolutePath()))
+                {
+                    JOptionPane.showMessageDialog(this, "Data saved successfully");
+                }
+                else
+                {
+                    JOptionPane.showMessageDialog(this, "Error saving data", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+        else
+        {
+        	noCustomerOrAccountSelectedMessage();
+        }
+    }
+}

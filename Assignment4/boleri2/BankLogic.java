@@ -249,11 +249,11 @@ public class BankLogic implements Serializable
         	
             if (existingPNo.equals(pNo))
             {
-            	int accountNumber = getNextAccountNumber();
-                Account newAccount = new SavingsAccount(accountNumber, pNo);
+            	int accountNum = getNextAccountNumber();
+                Account newAccount = new SavingsAccount(accountNum, pNo);
                 accounts.add(newAccount);
                 
-                return accountNumber;
+                return accountNum;
             }
         }
         
@@ -273,11 +273,11 @@ public class BankLogic implements Serializable
         	
             if (existingPNo.equals(pNo))
             {
-            	int accountNumber = getNextAccountNumber();
-                Account newAccount = new CreditAccount(accountNumber, pNo);
+            	int accountNum = getNextAccountNumber();
+                Account newAccount = new CreditAccount(accountNum, pNo);
                 accounts.add(newAccount);
                 
-                return accountNumber;
+                return accountNum;
             }
         }
         
@@ -418,6 +418,31 @@ public class BankLogic implements Serializable
         
         return null; // Customer not found
     }
+    
+    public boolean saveDataToFile(FileManager fileManager, String fileName)
+    {
+        return fileManager.saveData(fileName, customers, accounts, lastAccountNumber);
+    }
+
+    public boolean loadDataFromFile(FileManager fileManager, String fileName)
+    {
+        FileBundle data = fileManager.loadData(fileName);
+        
+        if (data != null)
+        {
+            customers = data.getCustomers();
+            accounts = data.getAccounts();
+            lastAccountNumber = data.getLastAccountNumber();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    public boolean saveTransactionsToFile(FileManager fileManager, int accountNum, String pNo, String fileName)
+    {
+    	return fileManager.saveTransactions(fileName, getTransactions(pNo, accountNum));
+    }
 
     /**
      * A helper method to find a specific account
@@ -464,25 +489,5 @@ public class BankLogic implements Serializable
     {
         lastAccountNumber++;
         return lastAccountNumber;
-    }
-    
-    public boolean saveDataToFile(FileManager fileManager, String fileName)
-    {
-        return fileManager.saveData(fileName, customers, accounts, lastAccountNumber);
-    }
-
-    public boolean loadDataFromFile(FileManager fileManager, String fileName)
-    {
-        DataBundle data = fileManager.loadData(fileName);
-        
-        if (data != null)
-        {
-            customers = data.getCustomers();
-            accounts = data.getAccounts();
-            lastAccountNumber = data.getLastAccountNumber();
-            return true;
-        }
-        
-        return false;
     }
 }

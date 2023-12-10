@@ -9,7 +9,7 @@ public class FileManager
     {
         try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(fileName)))
         {
-        	outputStream.writeObject(new DataBundle(customers, accounts, lastAccountNumber));
+        	outputStream.writeObject(new FileBundle(customers, accounts, lastAccountNumber));
             return true;
         }
         catch (IOException e)
@@ -19,11 +19,11 @@ public class FileManager
         }
     }
 
-    public DataBundle loadData(String fileName)
+    public FileBundle loadData(String fileName)
     {
         try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(fileName)))
         {
-            return (DataBundle)inputStream.readObject();
+            return (FileBundle)inputStream.readObject();
         }
         catch (IOException | ClassNotFoundException e)
         {
@@ -32,19 +32,22 @@ public class FileManager
         }
     }
     
-    public void saveTransactions(String fileName, Account account)
+    public boolean saveTransactions(String fileName, List<String> transactions)
     {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName)))
         {
-            for (Transaction transaction : account.getTransactions())
+            for (String transaction : transactions)
             {
-                writer.write(transaction.toString());
+                writer.write(transaction);
                 writer.newLine();
             }
+            
+            return true;
         }
         catch (IOException e)
         {
             e.printStackTrace();
+            return false;
         }
     }
 }
