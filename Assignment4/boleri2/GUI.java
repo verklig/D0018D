@@ -387,7 +387,7 @@ public class GUI extends JFrame
     }
     
     /**
-     * Creates the menu bar that has no function except exiting as of yet
+     * Creates the menu bar with exit, save, load and save transactions functions
      */
     private void createMenuBar()
     {
@@ -460,7 +460,7 @@ public class GUI extends JFrame
             return;
         }
 
-        if (firstName.matches("[a-zA-Z]+") && surName.matches("[a-zA-Z]+") && isNumeric(pNo))
+        if (firstName.matches("[a-zA-ZåäöÅÄÖ]+") && surName.matches("[a-zA-ZåäöÅÄÖ]+") && isNumeric(pNo))
         {
             boolean success = bankLogic.createCustomer(firstName, surName, pNo);
 
@@ -482,7 +482,7 @@ public class GUI extends JFrame
         }
         else
         {
-        	JOptionPane.showMessageDialog(this, "Failed to create Customer. Names can only consist of characters and Personal Number can only consist of numbers.", "Error", JOptionPane.ERROR_MESSAGE);
+        	JOptionPane.showMessageDialog(this, "Failed to create Customer. Names can only consist of letters and Personal Number can only consist of numbers.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -516,7 +516,7 @@ public class GUI extends JFrame
         String[] parts = selectedCustomer.split(" ");
         String pNo = parts[0];
         
-        if (newFirstName.matches("[a-zA-Z]+") && newSurName.matches("[a-zA-Z]+"))
+        if (newFirstName.matches("[a-zA-ZåäöÅÄÖ]+") && newSurName.matches("[a-zA-ZåäöÅÄÖ]+"))
         {
             boolean success = bankLogic.changeCustomerName(newFirstName, newSurName, pNo);
             
@@ -538,7 +538,7 @@ public class GUI extends JFrame
         }
         else
         {
-        	JOptionPane.showMessageDialog(this, "Failed to change Customer Name. Names can only consist of characters.", "Error", JOptionPane.ERROR_MESSAGE);
+        	JOptionPane.showMessageDialog(this, "Failed to change Customer Name. Names can only consist of letters.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -791,24 +791,8 @@ public class GUI extends JFrame
     }
     
     /**
-     * Helper method to check if a string only has numbers in it
-     * @param str contains the String that is supposed to consist of numbers only
-     * @return true or false
+     * Saves the entire bank program state
      */
-    private boolean isNumeric(String str)
-    {
-        try
-        {
-            Double.parseDouble(str);
-            return true;
-        }
-        catch (NumberFormatException e)
-        {
-            return false;
-        }
-    }
-    
-    // Save the entire state
     private void saveData()
     {
         String currentDirectory = System.getProperty("user.dir");
@@ -830,18 +814,30 @@ public class GUI extends JFrame
         if (result == JFileChooser.APPROVE_OPTION)
         {
             File selectedFile = fileChooser.getSelectedFile();
+            
+            if (selectedFile.exists())
+            {
+            	int answer = JOptionPane.showConfirmDialog(this, "The file already exists. Do you want to overwrite it?", "Confirm", JOptionPane.YES_NO_OPTION);
+                if (answer != JOptionPane.YES_OPTION)
+                {
+                    return;
+                }
+            }
+            
             if (bankLogic.saveDataToFile(fileManager, selectedFile.getAbsolutePath()))
             {
-                JOptionPane.showMessageDialog(this, "Data saved successfully");
+            	JOptionPane.showMessageDialog(this, "Data saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
             else
             {
-                JOptionPane.showMessageDialog(this, "Error saving data", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error saving data.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    // Load the entire state
+    /**
+     * Loads the entire bank program state
+     */
     private void loadData()
     {
         String currentDirectory = System.getProperty("user.dir");
@@ -863,20 +859,35 @@ public class GUI extends JFrame
         if (result == JFileChooser.APPROVE_OPTION)
         {
             File selectedFile = fileChooser.getSelectedFile();
+            
+        	int answer = JOptionPane.showConfirmDialog(this, "Are you sure you want to load the data? Any unsaved progress will be lost.", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (answer != JOptionPane.YES_OPTION)
+            {
+                return;
+            }
+            
             if (bankLogic.loadDataFromFile(fileManager, selectedFile.getAbsolutePath()))
             {
+                customerList.clearSelection();
+                accountComboBox.setSelectedIndex(-1);
+                accountComboBox.removeAllItems();
+                balanceLabel.setText("");
+                
                 updateCustomerList();
                 resetAllButtons();
                 
-                JOptionPane.showMessageDialog(this, "Data loaded successfully");
+                JOptionPane.showMessageDialog(this, "Data loaded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
             else
             {
-                JOptionPane.showMessageDialog(this, "Error loading data", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error loading data.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
     
+    /**
+     * Saves the account transactions of the selected account
+     */
     private void saveTransactions()
     {
         String selectedAccount = (String)accountComboBox.getSelectedItem();
@@ -887,18 +898,19 @@ public class GUI extends JFrame
             String[] accountParts = selectedAccount.split(" ");
             int accountNum = Integer.parseInt(accountParts[0]);
             
+            String fileName = accountNum + "-transactions.txt";
+            
             String[] customerParts = selectedCustomer.split(" ");
             String pNo = customerParts[0];
             
             String currentDirectory = System.getProperty("user.dir");
             String relativePath = currentDirectory + File.separator + "src" + File.separator + "boleri2_files";
             
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setCurrentDirectory(new File(relativePath));
+            JFileChooser fileChooser = new JFileChooser(new File(relativePath));
+            fileChooser.setSelectedFile(new File(fileName));
             
-            FileNameExtensionFilter txtFilter = new FileNameExtensionFilter("Text Files (*.txt)", "txt");
-            fileChooser.addChoosableFileFilter(txtFilter);
-            fileChooser.setFileFilter(txtFilter);
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("Text files (*.txt)", "txt");
+            fileChooser.setFileFilter(filter);
             
             JPanel accessoryPanel = new JPanel();
             accessoryPanel.setLayout(new BorderLayout());
@@ -913,26 +925,52 @@ public class GUI extends JFrame
             if (result == JFileChooser.APPROVE_OPTION)
             {
                 File selectedFile = fileChooser.getSelectedFile();
-                String filePath = selectedFile.getAbsolutePath();
                 
-                if (!filePath.toLowerCase().endsWith(".txt"))
+                if (selectedFile.exists())
                 {
-                    filePath += ".txt";
+                	int answer = JOptionPane.showConfirmDialog(this, "The file already exists. Do you want to overwrite it?", "Confirm", JOptionPane.YES_NO_OPTION);
+                    if (answer != JOptionPane.YES_OPTION)
+                    {
+                        return;
+                    }
+                }
+                
+                if (!selectedFile.getAbsolutePath().toLowerCase().endsWith(".txt"))
+                {
+                    selectedFile = new File(selectedFile.getAbsolutePath() + ".txt");
                 }
                 
                 if (bankLogic.saveTransactionsToFile(fileManager, accountNum, pNo, selectedFile.getAbsolutePath()))
                 {
-                    JOptionPane.showMessageDialog(this, "Data saved successfully");
+                	JOptionPane.showMessageDialog(this, "Data saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
                 else
                 {
-                    JOptionPane.showMessageDialog(this, "Error saving data", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Error saving data.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
         else
         {
         	noCustomerOrAccountSelectedMessage();
+        }
+    }
+    
+    /**
+     * Helper method to check if a string only has numbers in it
+     * @param str contains the String that is supposed to consist of numbers only
+     * @return true or false
+     */
+    private boolean isNumeric(String str)
+    {
+        try
+        {
+            Double.parseDouble(str);
+            return true;
+        }
+        catch (NumberFormatException e)
+        {
+            return false;
         }
     }
 }

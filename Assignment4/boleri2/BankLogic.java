@@ -419,11 +419,23 @@ public class BankLogic implements Serializable
         return null; // Customer not found
     }
     
+    /**
+     * Saves the data to a file
+     * @param fileManager contains a reference to the FileManager class
+     * @param fileName contains the file name
+     * @return the result of the saveData method in the fileManager class
+     */
     public boolean saveDataToFile(FileManager fileManager, String fileName)
     {
         return fileManager.saveData(fileName, customers, accounts, lastAccountNumber);
     }
 
+    /**
+     * Loads the data from a file
+     * @param fileManager contains a reference to the FileManager class
+     * @param fileName contains the file name
+     * @return true or false
+     */
     public boolean loadDataFromFile(FileManager fileManager, String fileName)
     {
         FileBundle data = fileManager.loadData(fileName);
@@ -439,6 +451,14 @@ public class BankLogic implements Serializable
         return false;
     }
     
+    /**
+     * Saves the transactions to a file
+     * @param fileManager contains a reference to the FileManager class
+     * @param accountNum contains the account number
+     * @param pNo contains the personal number of the customer
+     * @param fileName contains the file name
+     * @return the result of the saveTransactions method in the fileManager class
+     */
     public boolean saveTransactionsToFile(FileManager fileManager, int accountNum, String pNo, String fileName)
     {
     	return fileManager.saveTransactions(fileName, getTransactions(pNo, accountNum));

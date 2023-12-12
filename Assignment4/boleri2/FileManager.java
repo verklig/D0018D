@@ -3,8 +3,20 @@ package boleri2;
 import java.io.*;
 import java.util.List;
 
+/**
+ * This class manages the files (reads and writes them), it uses the FileBundle class to get the relevant information.
+ * @author Eric Blohm, boleri-2
+ */
 public class FileManager
 {
+    /**
+     * Saves the data to a file
+     * @param fileName contains the file name
+     * @param customers contains the list of customers
+     * @param accounts contains the list of accounts
+     * @param lastAccountNumber contains the last account number
+     * @return true or false
+     */
     public boolean saveData(String fileName, List<Customer> customers, List<Account> accounts, int lastAccountNumber)
     {
         try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(fileName)))
@@ -19,6 +31,11 @@ public class FileManager
         }
     }
 
+    /**
+     * Loads the data from a file
+     * @param fileName contains the file name
+     * @return the FileBundle object
+     */
     public FileBundle loadData(String fileName)
     {
         try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(fileName)))
@@ -32,6 +49,12 @@ public class FileManager
         }
     }
     
+    /**
+     * Saves the transactions to a file
+     * @param fileName contains the file name
+     * @param transactions contains the list of transactions
+     * @return true or false
+     */
     public boolean saveTransactions(String fileName, List<String> transactions)
     {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName)))
